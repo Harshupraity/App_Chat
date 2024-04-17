@@ -129,8 +129,8 @@ const createMessagesInAChat = async (chatId, numMessages) => {
 };
 
 export {
-    createGroupChats,
-    createMessages,
-    createMessagesInAChat,
-    createSingleChats
+  createGroupChats,
+  createMessages,
+  createMessagesInAChat,
+  createSingleChats,
 };

@@ -1,27 +1,31 @@
 import { compare } from "bcrypt";
-import { User } from "../models/user.js";
-import { cookieOptions, emitEvent, sendToken } from "../utils/features.js";
+import { NEW_REQUEST, REFETCH_CHATS } from "../constants/events.js";
+import { getOtherMember } from "../lib/helper.js";
 import { TryCatch } from "../middlewares/error.js";
-import { ErrorHandler } from "../utils/utility.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
-import { NEW_REQUEST, REFETCH_CHATS } from "../constants/event.js";
-import {getOtherMember} from "../lib/helper.js"
+import { User } from "../models/user.js";
+import {
+  cookieOptions,
+  emitEvent,
+  sendToken,
+  uploadFilesToCloudinary,
+} from "../utils/features.js";
+import { ErrorHandler } from "../utils/utility.js";
 
-const newUser = TryCatch(async (req, res,next) => {
+// Create a new user and save it to the database and save token in cookie
+const newUser = TryCatch(async (req, res, next) => {
   const { name, username, password, bio } = req.body;
 
+  const file = req.file;
 
-  const file = req.file
+  if (!file) return next(new ErrorHandler("Please Upload Avatar"));
 
-  
+  const result = await uploadFilesToCloudinary([file]);
 
-  if(!file){
-    return next(new ErrorHandler("Please IUpload Avatar"))
-  }
   const avatar = {
-    pubic_id: "sdlkfj",
-    url: "adf",
+    public_id: result[0].public_id,
+    url: result[0].url,
   };
 
   const user = await User.create({
@@ -31,48 +35,47 @@ const newUser = TryCatch(async (req, res,next) => {
     password,
     avatar,
   });
+
   sendToken(res, user, 201, "User created");
-}
-);
-//Login user and save token in cookie
+});
+
+// Login user and save token in cookie
 const login = TryCatch(async (req, res, next) => {
   const { username, password } = req.body;
 
-  console.log(username);
   const user = await User.findOne({ username }).select("+password");
 
-  if (!user) {
-    return next(new ErrorHandler("Invalid Username or Password", 404));
-  }
+  if (!user) return next(new ErrorHandler("Invalid Username or Password", 404));
 
   const isMatch = await compare(password, user.password);
-  // res.send("Hello World");
 
-  if (!isMatch) {
+  if (!isMatch)
     return next(new ErrorHandler("Invalid Username or Password", 404));
-  }
 
-  sendToken(res, user, 200, `Welcome Back,${user.name}`);
+  sendToken(res, user, 200, `Welcome Back, ${user.name}`);
 });
-const getMyProfile = TryCatch(async (req, res) => {
-  const user = await User.findById(req.user).select("-password");
+
+const getMyProfile = TryCatch(async (req, res, next) => {
+  const user = await User.findById(req.user);
+
+  if (!user) return next(new ErrorHandler("User not found", 404));
 
   res.status(200).json({
     success: true,
-    // data:req.user,
     user,
   });
 });
+
 const logout = TryCatch(async (req, res) => {
   return res
     .status(200)
-    .cookie("Inst@Book-token", "", { cookieOptions, maxAge: 0 })
+    .cookie("chattu-token", "", { ...cookieOptions, maxAge: 0 })
     .json({
       success: true,
-      // data:req.user,
       message: "Logged out successfully",
     });
 });
+
 const searchUser = TryCatch(async (req, res) => {
   const { name = "" } = req.query;
 
@@ -125,6 +128,7 @@ const sendFriendRequest = TryCatch(async (req, res, next) => {
     message: "Friend Request Sent",
   });
 });
+
 const acceptFriendRequest = TryCatch(async (req, res, next) => {
   const { requestId, accept } = req.body;
 
@@ -132,7 +136,6 @@ const acceptFriendRequest = TryCatch(async (req, res, next) => {
     .populate("sender", "name")
     .populate("receiver", "name");
 
-   
   if (!request) return next(new ErrorHandler("Request not found", 404));
 
   if (request.receiver._id.toString() !== req.user.toString())
@@ -173,6 +176,7 @@ const getMyNotifications = TryCatch(async (req, res) => {
     "sender",
     "name avatar"
   );
+
   const allRequests = requests.map(({ _id, sender }) => ({
     _id,
     sender: {
@@ -199,20 +203,12 @@ const getMyFriends = TryCatch(async (req, res) => {
   const friends = chats.map(({ members }) => {
     const otherUser = getOtherMember(members, req.user);
 
-    if (!otherUser || !otherUser._id) {
-      // Handle case where otherUser or _id is missing
-      return null; // Skip this entry in the friends array
-    }
-    console.log(otherUser._id);
-
     return {
-      _id:otherUser._id,
-      
+      _id: otherUser._id,
       name: otherUser.name,
       avatar: otherUser.avatar.url,
     };
-   
-  }).filter(friend => friend !== null);
+  });
 
   if (chatId) {
     const chat = await Chat.findById(chatId);
@@ -234,13 +230,13 @@ const getMyFriends = TryCatch(async (req, res) => {
 });
 
 export {
-  login,
-  newUser,
+  acceptFriendRequest,
+  getMyFriends,
+  getMyNotifications,
   getMyProfile,
+  login,
   logout,
+  newUser,
   searchUser,
   sendFriendRequest,
-  acceptFriendRequest,
-  getMyNotifications,
-  getMyFriends
 };

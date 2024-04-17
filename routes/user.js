@@ -1,17 +1,15 @@
 import express from "express";
 import {
-  login,
-  newUser,
-  getMyProfile,
-  logout,
-  searchUser,
-  sendFriendRequest,
-  getMyNotifications,
   acceptFriendRequest,
   getMyFriends,
+  getMyNotifications,
+  getMyProfile,
+  login,
+  logout,
+  newUser,
+  searchUser,
+  sendFriendRequest,
 } from "../controllers/user.js";
-import { singleAvatar } from "../middlewares/multer.js";
-import { isAuthenticated } from "../middlewares/auth.js";
 import {
   acceptRequestValidator,
   loginValidator,
@@ -19,15 +17,20 @@ import {
   sendRequestValidator,
   validateHandler,
 } from "../lib/validators.js";
+import { isAuthenticated } from "../middlewares/auth.js";
+import { singleAvatar } from "../middlewares/multer.js";
 
 const app = express.Router();
 
 app.post("/new", singleAvatar, registerValidator(), validateHandler, newUser);
 app.post("/login", loginValidator(), validateHandler, login);
 
-//After here user must be logged
+// After here user must be logged in to access the routes
+
 app.use(isAuthenticated);
+
 app.get("/me", getMyProfile);
+
 app.get("/logout", logout);
 
 app.get("/search", searchUser);
@@ -49,4 +52,5 @@ app.put(
 app.get("/notifications", getMyNotifications);
 
 app.get("/friends", getMyFriends);
+
 export default app;

@@ -1,37 +1,46 @@
-import mongoose,{ Schema,model} from "mongoose";
-import {hash} from "bcrypt"
+import mongoose, { Schema, model } from "mongoose";
+import { hash } from "bcrypt";
 
-const schema =new Schema({
-    name:{
-        type:String,
-        required:true,
+const schema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    username:{
-        type:String,
-        required:true,
-        unique:true,
+    bio: {
+      type: String,
+      required: true,
     },
-    password:{
-        type:String,
-        required:true,
-        select:false,
+    username: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    avatar:{
-        public_id:{
-            type:String,
-            required:false,//video m y true h
-        },
-        url:{
-            type:String,
-            required:false//video m y true h
-        }
-    }
-},
-{
-    timestamps:true,
-})
-schema.pre("save",async function(next){
-    if(!this.isModified("password")) next();
-    this.password = await hash(this.password,10);
-})
-export  const User= mongoose.models.User|| model("User",schema);
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    avatar: {
+      public_id: {
+        type: String,
+        required: true,//inko false kar dena nhi chale tho
+      },
+      url: {
+        type: String,
+        required: true,//inko false kar dena nahi chale tho
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+schema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  this.password = await hash(this.password, 10);
+});
+
+export const User = mongoose.models.User || model("User", schema);

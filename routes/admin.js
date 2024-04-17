@@ -13,11 +13,11 @@ import { adminOnly } from "../middlewares/auth.js";
 
 const app = express.Router();
 
-app.post("/verify",adminLoginValidator(),validateHandler, adminLogin);
+app.post("/verify", adminLoginValidator(), validateHandler, adminLogin);
 
 app.get("/logout", adminLogout);
 
-// // Only Admin Can Accecss these Routes
+// Only Admin Can Accecss these Routes
 
 app.use(adminOnly);
 

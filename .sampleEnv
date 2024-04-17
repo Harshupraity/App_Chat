@@ -1,0 +1,10 @@
+MONGO_URI =mongodb+srv://upraityharsh8:upraityharsh8@cluster0.59byicm.mongodb.net/
+JWT_SECRET =aslsdfsdfdffssesdfwer
+ADMIN_SECRET_KEY = keyhbhaiya
+
+NODE_ENV = DEVELOPMENT
+CLIENT_URL = http://127.0.0.1:5173/
+
+CLOUDINARY_CLOUD_NAME= ds65opndt
+CLOUDINARY_API_KEY = 564878479436995
+CLOUDINARY_API_SECRET = c0QKqc3hlk7ZUx-8joHHfbRLOh8
